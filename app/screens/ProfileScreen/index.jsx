@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { FlatList, Image, StyleSheet, Text, View } from 'react-native'
 
 import ProfileList from '../../components/ProfileList'
@@ -6,13 +6,41 @@ import { profileList, profileSecondList } from '../../config/profileList'
 
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize'
 
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const ProfileScreen = ({ navigation }) => {
+
+  let [userName, setUserName] = useState('')
+  let [userImage,setUserImage] = useState(null)
+  let [userType,setUserType] = useState('')
+
+
+  const setUserDetail = async() => {
+
+    try {
+      const userName = await AsyncStorage.getItem('userName')
+      const userLogo = await AsyncStorage.getItem('userLogo')
+      const userType = await AsyncStorage.getItem('userType')
+      setUserName(userName)
+      setUserImage(userLogo)
+      setUserType(userType)
+    } catch(e) {
+      ToastAndroid.show(e.message,ToastAndroid.BOTTOM);
+    }
+  }
+
+  setUserDetail()
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Profile</Text>
-      <Image source={require('../../../assets/request.png')} style={styles.image} />
-      <Text style={styles.title}>End Poverty Welfare Society</Text>
-      <Text style={styles.subTitle}>Non Governmental Organization</Text>
+      {
+          userImage !== null ? <Image style={{width: 100, height: 100, borderRadius: 12}}  source={{uri : userImage}} />
+          : <Image style={{width: 200, height: 200}}  source={require('../../../assets/home.png')} />
+        }
+      <Text style={styles.title}>{userName}</Text>
+      <Text style={styles.subTitle}>{userType === 'NGO' ? 'Non Governmental Organization' : 'Restaurant'}</Text>
       <FlatList
         data={profileList}
         renderItem={({ item }) => (
@@ -21,6 +49,7 @@ const ProfileScreen = ({ navigation }) => {
             listTitle={item.listTitle}
             route={item.route}
             navigation={navigation}
+            type="list1"
           />
         )}
         keyExtractor={(item) => item.id}
@@ -28,7 +57,7 @@ const ProfileScreen = ({ navigation }) => {
       />
       <FlatList
         data={profileSecondList}
-        renderItem={({ item }) => <ProfileList icon={item.icon} listTitle={item.listTitle} />}
+        renderItem={({ item }) => <ProfileList type="list2" icon={item.icon} listTitle={item.listTitle} navigation={navigation}/>}
         keyExtractor={(item) => item.id}
       />
     </View>

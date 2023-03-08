@@ -6,9 +6,15 @@ import { RFPercentage, RFValue } from 'react-native-responsive-fontsize'
 
 import colors from '../../../config/colors'
 
-const DropdownComponent = ({ data, placeholder }) => {
+const DropdownComponent = ({ data, placeholder, changeHandler }) => {
   const [value, setValue] = useState(null)
 
+
+  const changeValue = (value) => {
+    setValue(value);
+    if(changeHandler !== null)
+      changeHandler(value)
+  }
   return (
     <View style={styles.container}>
       <Dropdown
@@ -24,7 +30,8 @@ const DropdownComponent = ({ data, placeholder }) => {
         placeholder={placeholder}
         value={value}
         onChange={(item) => {
-          setValue(item.value)
+          changeValue(item.value);
+          
         }}
       />
     </View>

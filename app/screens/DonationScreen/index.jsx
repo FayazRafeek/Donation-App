@@ -1,5 +1,5 @@
-import React from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { ScrollView, StyleSheet, Text, ToastAndroid, View } from 'react-native'
 
 import DonationList from '../../components/DonationList'
 import ProfileButton from '../../components/common/ProfileButton'
@@ -8,33 +8,91 @@ import { homeData, homeSecondData } from '../../config/homeData'
 
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize'
 
+import { collection, query, orderBy, onSnapshot,getFirestore } from "firebase/firestore";
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {app} from '../../../firebaseConfig'
+
 const DonationScreen = ({ navigation }) => {
+
+  const [userDonations, setUserDonations] = useState([])
+  const [liveDonations, setLiveDonations] = useState([])
+
+  useEffect(() => {
+
+    fetchDonations();
+
+  },[])
+
+  const fetchDonations = async() => {
+
+
+    ToastAndroid.show('Loading...',ToastAndroid.BOTTOM)
+
+    const db = getFirestore(app);
+    const q = query(collection(db, "donations"), orderBy("ts"));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const donations = [];
+      querySnapshot.forEach((doc) => {
+        ToastAndroid.show('Data updated',ToastAndroid.BOTTOM)
+        donations.push(doc.data());
+      });
+
+      splitList(donations)
+    });
+  }
+
+  let splitList = async(data) => {
+
+    try {
+      const userId = await AsyncStorage.getItem('userId')
+
+      let userDonation = []
+      let liveDonations = []
+      data.forEach((donations) => {
+        if(donations.userId === userId)
+          userDonation.push(donations)
+        else
+          liveDonations.push(donations)
+      })
+
+      setUserDonations(userDonation)
+      setLiveDonations(liveDonations)
+
+
+      
+    } catch(e) {
+      ToastAndroid.show(e.message,ToastAndroid.BOTTOM);
+    }
+  }
+  
   return (
     <>
       <ScrollView>
         <View style={styles.container}>
           <Text style={styles.heading}>Live Donations</Text>
-          {homeData.map((item) => (
-            <View key={item.id.toString()} style={{ alignItems: 'center', width: '100%' }}>
+          {liveDonations.map((item) => (
+            <View key={item.ts} style={{ alignItems: 'center', width: '100%' }}>
               <DonationList
-                image={item.image}
-                header={item.header}
+                image={ item.userLogo === null ? require('../../../assets/home.png') : {uri : item.userLogo}}
+                header={item.itemName}
                 quantity={item.quantity}
-                time={item.time}
-                date={item.date}
+                time={item.timeOfPreperation}
+                date={item.ts}
                 check={false}
               />
             </View>
           ))}
           <Text style={styles.heading}>Your Donations</Text>
-          {homeSecondData.map((item) => (
-            <View key={item.id.toString()} style={{ alignItems: 'center', width: '100%' }}>
+          {userDonations.map((item) => (
+            <View key={item.ts} style={{ alignItems: 'center', width: '100%' }}>
               <DonationList
-                image={item.image}
-                header={item.header}
+                image={ item.userLogo === null ? require('../../../assets/home.png') : {uri : item.userLogo}}
+                header={item.itemName}
                 quantity={item.quantity}
-                time={item.time}
-                date={item.date}
+                time={item.timeOfPreperation}
+                date={item.ts}
                 check={false}
               />
             </View>

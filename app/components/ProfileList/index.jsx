@@ -1,13 +1,55 @@
 import React from 'react'
-import { StyleSheet, Text, TouchableWithoutFeedback, View } from 'react-native'
+import { StyleSheet, Text, TouchableWithoutFeedback, ToastAndroid, View } from 'react-native'
 
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize'
 
 import { AntDesign } from '@expo/vector-icons'
+import app from '../../../firebaseConfig'
+import { getAuth, signOut } from "firebase/auth";
 
-const ProfileList = ({ icon, listTitle, route, navigation }) => {
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ProfileList = ({ icon, listTitle, route, navigation, type }) => {
+
+  const handleMenuClick = () => {
+    if(type === "list1"){
+      navigation.navigate(route)
+      return
+    }
+
+    if(listTitle === "Log Out"){
+      startLogout();
+    }
+  }
+ 
+
+  const startLogout = async() => {
+
+    const auth = getAuth(app);
+    signOut(auth).then(() => {
+      removeCache();
+    }).catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      ToastAndroid.show(errorMessage,ToastAndroid.BOTTOM);
+      console.log(error);
+    });
+  }
+
+  const removeCache = async() => {
+    try {
+      await AsyncStorage.setItem("isLoggedIn", "false");
+      navigation.navigate('FirstScreen')
+    } catch (error) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      ToastAndroid.show(errorMessage,ToastAndroid.BOTTOM);
+      console.log(error);
+    }
+  }
+
   return (
-    <TouchableWithoutFeedback onPress={() => navigation.navigate(route)}>
+    <TouchableWithoutFeedback onPress={() => handleMenuClick()}>
       <View style={styles.container}>
         <View style={styles.icon}>{icon}</View>
         <View style={styles.components}>

@@ -1,17 +1,45 @@
-import React from 'react'
-import { Image, StyleSheet, Text, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { Image, StyleSheet, Text, View,ToastAndroid } from 'react-native'
 
 import HomeButton from '../../components/HomeButton'
 import ProfileButton from '../../components/common/ProfileButton'
 
 import { RFPercentage, RFValue } from 'react-native-responsive-fontsize'
 
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 const HomeScreen = ({ navigation }) => {
+
+  let [userName, setUserName] = useState('')
+  let [userImage,setUserImage] = useState(null)
+
+
+  const setUserDetail = async() => {
+
+    try {
+      const userName = await AsyncStorage.getItem('userName')
+      const userLogo = await AsyncStorage.getItem('userLogo')
+      setUserName(userName)
+      setUserImage(userLogo)
+    } catch(e) {
+      ToastAndroid.show(e.message,ToastAndroid.BOTTOM);
+    }
+  }
+
+  setUserDetail()
+
+
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.opening}>Welcome Back Sariya's Sip N Bites!</Text>
-        <Image source={require('../../../assets/home.png')} />
+        <Text style={styles.opening}>Welcome Back, {userName}!</Text>
+        {
+          userImage !== null ? <Image style={{width: 250, height: 300, borderRadius: 12}}  source={{uri : userImage}} />
+          : <Image style={{width: 200, height: 200}}  source={require('../../../assets/home.png')} />
+        }
+
         <HomeButton
           title='Make a Donation'
           onPress={() => navigation.navigate('DonationFormScreen')}

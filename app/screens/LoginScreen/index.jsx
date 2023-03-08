@@ -1,5 +1,5 @@
 import React from 'react'
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Image, StyleSheet, Text, TouchableOpacity,ToastAndroid, View } from 'react-native'
 
 import AppForm from '../../components/Forms/AppForm'
 import AppFormField from '../../components/Forms/AppFormField'
@@ -10,6 +10,13 @@ import { RFPercentage, RFValue } from 'react-native-responsive-fontsize'
 import colors from '../../config/colors'
 
 import * as Yup from 'yup'
+
+import {app} from '../../../firebaseConfig'
+import { getAuth,signInWithEmailAndPassword } from "firebase/auth";
+import { getFirestore,doc, getDoc } from "firebase/firestore";
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const validationSchema = Yup.object().shape({
   email: Yup.string().email('Please enter valid email').required('Email is required'),
@@ -22,16 +29,87 @@ const validationSchema = Yup.object().shape({
     .required('Password is required'),
 })
 
-const LoginScreen = ({ navigation }) => (
+
+const LoginScreen = ({ navigation }) => {
+
+  const startLogin = async(values) => {
+
+    let email = values.email;
+    let password = values.password
+
+    let auth = getAuth(app)
+    signInWithEmailAndPassword(auth,email,password)
+    .then((data) => {
+      if(data.user !== null){
+        const userId = data.user.uid;
+        ToastAndroid.show("Authentication successfull ",ToastAndroid.BOTTOM);
+
+        fetchUserFromDB(userId);
+      }
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      ToastAndroid.show(errorMessage,ToastAndroid.BOTTOM);
+    })
+
+  }
+
+  const fetchUserFromDB = async(userId) => {
+
+    const db = getFirestore(app);
+    const userRef = doc(db, 'users', userId);
+    getDoc(userRef)
+    .then((docSnap) => {
+      if (docSnap.exists()) {
+        persistUserData(docSnap.data())
+      } else {
+        // doc.data() will be undefined in this case
+        ToastAndroid.show("User data dosen't exists, please register to continue.",ToastAndroid.BOTTOM);
+      }
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      ToastAndroid.show(errorMessage,ToastAndroid.BOTTOM);
+    })
+
+  }
+
+  const persistUserData = async (user) => {
+    try {
+      
+        await AsyncStorage.setItem("userId", user.userId);
+        await AsyncStorage.setItem("userName", user.userName);
+        await AsyncStorage.setItem("phone", user.phone);
+        await AsyncStorage.setItem("userType", user.userType);
+        await AsyncStorage.setItem("email", user.email);
+        
+        if(user.logoUrl !== null)
+          await AsyncStorage.setItem("userLogo", user.logoUrl);
+
+        if(user.userType === 'NGO')
+          navigation.navigate('HomeNGOScreen')
+        else
+        navigation.navigate('HomeScreen')
+    } catch (error) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      ToastAndroid.show(errorMessage,ToastAndroid.BOTTOM);
+      console.log(error);
+    }
+  }
+  
+  return (
   <View style={styles.background}>
     <View style={styles.logo}>
       <Image source={require('../../../assets/logo.png')} />
     </View>
     <View style={styles.components}>
       <AppForm
-        initialValues={{ email: '', password: '' }}
-        onSubmit={() => navigation.navigate('HomeScreen')}
-        validationSchema={validationSchema}
+        initialValues={{ email: 'fayaz3@email.com', password: '12345654' }}
+        onSubmit={(values) => startLogin(values)}
+        // validationSchema={validationSchema}
       >
         <AppFormField
           autoCapitalize='none'
@@ -64,6 +142,7 @@ const LoginScreen = ({ navigation }) => (
     </View>
   </View>
 )
+  }
 
 const styles = StyleSheet.create({
   background: {

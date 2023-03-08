@@ -13,10 +13,11 @@ const DonationList = ({ image, header, quantity, time, date, check }) => {
         <Text style={styles.header}>{header}</Text>
         <Text style={styles.elements}>Quantity: {quantity}</Text>
         <Text style={styles.elements}>
-          {check ? 'Time of Preparation - ' : 'Status: '}
-          {time}
+          {/* {check ? 'Time of Preparation - ' : 'Status: '}
+           */}
+           Time of preperation : {time}
         </Text>
-        <Text style={styles.elements}>Date: {date}</Text>
+        <Text style={styles.elements}>Posted On: {new Intl.DateTimeFormat('en-US', {year: 'numeric', month: '2-digit',day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'}).format(+date)}</Text>
       </View>
     </View>
   )

@@ -7,13 +7,13 @@ const RequestList = ({ image, title, details, time, onPress }) => {
   return (
     <TouchableWithoutFeedback onPress={onPress}>
       <View style={styles.container}>
-        <View style={styles.image}>
+        <View style={styles.image} >
           <Image source={image} style={styles.image} />
         </View>
         <View style={styles.components}>
           <Text style={styles.header}>{title}</Text>
           <Text style={styles.elements}>{details}</Text>
-          <Text style={styles.elements}>{time}</Text>
+          <Text style={styles.elements}>Need before : {time}</Text>
         </View>
       </View>
     </TouchableWithoutFeedback>
